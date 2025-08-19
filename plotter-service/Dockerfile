@@ -1,17 +1,20 @@
+# plotter-service/Dockerfile
 FROM python:3.11-slim
 
-# System deps: imagemagick, potrace, autotrace (optional)
+# System deps: CLI tools + Cairo/Pango (runtime) for vpype/pycairo
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    imagemagick potrace autotrace curl ca-certificates \
+    imagemagick potrace autotrace \
+    libcairo2 libpango-1.0-0 libpangoft2-1.0-0 \
+    libgomp1 ca-certificates curl \
  && rm -rf /var/lib/apt/lists/*
 
-# Safer ImageMagick defaults sometimes block PDFs; we only use raster→pbm
-# (No policy changes needed here.)
-
 WORKDIR /app
+
+# Python deps
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# App code
 COPY app ./app
 
 EXPOSE 8000
