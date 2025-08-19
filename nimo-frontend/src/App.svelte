@@ -4,6 +4,7 @@
   let loading = false;
   const api = "https://nimo.fly.dev/generate-svg";
 
+  // Generate SVG from image URL
   async function generate() {
     loading = true;
     svg = "";
