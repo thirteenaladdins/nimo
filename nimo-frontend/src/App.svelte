@@ -50,7 +50,7 @@
 
 <main class="p-4">
   <h1>Nimo</h1>
-  
+
   <!-- Daily Art Section -->
   <div class="mb-8 p-4 bg-gray-50 rounded-lg">
     <h2 class="text-xl font-semibold mb-2">Nimo's Daily Creation</h2>
@@ -77,7 +77,10 @@
       placeholder="Enter image URL"
       class="border p-2 w-full rounded"
     />
-    <button on:click={generate} class="mt-2 bg-black text-white px-4 py-2 rounded hover:bg-gray-800">
+    <button
+      on:click={generate}
+      class="mt-2 bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+    >
       {loading ? "Processing..." : "Generate SVG"}
     </button>
   </div>
@@ -99,33 +102,33 @@
     height: auto;
     max-height: 300px;
   }
-  
+
   main {
     max-width: 800px;
     margin: 0 auto;
   }
-  
+
   h1 {
     font-size: 2.5rem;
     font-weight: bold;
     text-align: center;
     margin-bottom: 2rem;
   }
-  
+
   h2 {
     color: #374151;
   }
-  
+
   input {
     border-color: #d1d5db;
   }
-  
+
   input:focus {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
-  
+
   button:hover {
     transition: background-color 0.2s;
   }

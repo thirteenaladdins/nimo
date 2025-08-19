@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 from .pipeline import raster_to_svg
+from datetime import date
+import random
 
 app = FastAPI(
     title="Plotter Service",
@@ -52,6 +54,36 @@ def generate_svg(job: Job):
         return {"svg": svg}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def generate_daily_svg():
+    """Generate a unique SVG for the current day using procedural generation"""
+    # Seed randomness by date so it's stable
+    today = date.today().isoformat()
+    random.seed(today)
+
+    # Example: generate a spiral path
+    w, h = 160, 160
+    svg = f'<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">'
+    x, y = w/2, h/2
+    path = f'<path d="M{x},{y} '
+    for i in range(200):
+        angle = i * 0.2
+        r = 2 + i * 0.3
+        px = x + r * random.uniform(0.9, 1.1) * \
+            (1.2 * random.choice([1, -1])) * (i % 2)
+        py = y + r * random.uniform(0.9, 1.1) * \
+            (1.2 * random.choice([1, -1])) * (i % 2)
+        path += f'L{px},{py} '
+    path += '" stroke="black" fill="none"/>'
+    svg += path + "</svg>"
+    return svg
+
+
+@app.get("/daily-art")
+def daily_art():
+    """Return a unique SVG for the current day"""
+    return {"date": date.today().isoformat(), "svg": generate_daily_svg()}
 
 
 if __name__ == "__main__":

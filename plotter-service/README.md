@@ -66,6 +66,7 @@ The service will be available at `http://localhost:8000`
 - `GET /` - Root endpoint with service status
 - `GET /health` - Health check endpoint
 - `POST /generate-svg` - Convert raster images to optimized SVG for plotting
+- `GET /daily-art` - Get a unique procedural SVG for the current day
 - `GET /docs` - Interactive API documentation (Swagger UI)
 
 ### Using the Pipeline
@@ -121,6 +122,21 @@ pipeline.optimize_paths()
 - `width_mm`, `height_mm`: Output dimensions in millimeters
 - `margin_mm`: Margin around the content
 - `simplify_mm`: Line simplification threshold
+
+### Daily Art Generation
+
+The service includes a daily art endpoint that generates unique procedural SVGs:
+
+```bash
+# Get today's unique SVG
+curl "https://your-service.com/daily-art"
+```
+
+**Features:**
+- **Date-seeded randomness**: Same output all day, new one each day
+- **Procedural generation**: Uses mathematical algorithms (spirals, noise, etc.)
+- **Plotter-ready**: Optimized SVG output suitable for plotting
+- **Consistent dimensions**: 160x160mm output with proper viewBox
 
 ## Project Structure
 
