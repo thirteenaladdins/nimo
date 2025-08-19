@@ -1,12 +1,12 @@
 <script>
-  let imageUrl = ""
-  let svg = ""
-  let loading = false
-  const api = "https://<your-fly-app>.fly.dev/generate-svg"
+  let imageUrl = "";
+  let svg = "";
+  let loading = false;
+  const api = "https://nimo.fly.dev/generate-svg";
 
   async function generate() {
-    loading = true
-    svg = ""
+    loading = true;
+    svg = "";
     try {
       const res = await fetch(api, {
         method: "POST",
@@ -17,15 +17,15 @@
           height_mm: 160,
           margin_mm: 5,
           simplify_mm: 0.2,
-          mode: "outline"
-        })
-      })
-      const data = await res.json()
-      svg = data.svg
+          mode: "outline",
+        }),
+      });
+      const data = await res.json();
+      svg = data.svg;
     } catch (err) {
-      console.error(err)
+      console.error(err);
     }
-    loading = false
+    loading = false;
   }
 </script>
 
