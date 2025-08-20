@@ -1,9 +1,18 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 from .pipeline import raster_to_svg
 from datetime import date
 import random
+from typing import Optional, List
+
+from .db import (
+    init_db,
+    create_job,
+    list_jobs as db_list_jobs,
+    reserve_next_job,
+    update_job_status,
+)
 
 app = FastAPI(
     title="Plotter Service",
@@ -19,6 +28,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+def _startup() -> None:
+    init_db()
 
 
 @app.get("/")
@@ -38,6 +51,15 @@ class Job(BaseModel):
     margin_mm: float = 5
     simplify_mm: float = 0.2
     mode: str = "outline"  # "outline" or "centerline"
+
+
+class CreateJobRequest(BaseModel):
+    svg_text: Optional[str] = None
+
+
+class JobStatusUpdate(BaseModel):
+    status: str
+    notes: Optional[str] = None
 
 
 @app.post("/generate-svg")
@@ -84,6 +106,52 @@ def generate_daily_svg():
 def daily_art():
     """Return a unique SVG for the current day"""
     return {"date": date.today().isoformat(), "svg": generate_daily_svg()}
+
+
+# Jobs API
+
+@app.post("/jobs")
+def create_job_endpoint(payload: CreateJobRequest):
+    try:
+        svg = payload.svg_text if payload.svg_text else generate_daily_svg()
+        job_id = create_job(svg)
+        return {"job_id": job_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/jobs")
+def list_jobs(limit: int = 20):
+    try:
+        jobs = db_list_jobs(limit=limit)
+        return {"jobs": jobs}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/jobs/next")
+def next_job(plotter_id: str, resp: Response):
+    try:
+        job = reserve_next_job(plotter_id=plotter_id)
+        if job is None:
+            resp.status_code = status.HTTP_204_NO_CONTENT
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+        return job
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/jobs/{job_id}/status")
+def set_job_status(job_id: int, payload: JobStatusUpdate):
+    try:
+        job = update_job_status(job_id, payload.status, payload.notes)
+        if job is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+        return job
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
