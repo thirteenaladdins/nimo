@@ -47,6 +47,12 @@ const api = "https://your-deployed-service.com/generate-svg"
 3. View the generated SVG output
 4. The SVG is ready for plotting!
 
+### Daily Art + Jobs
+
+- The homepage shows "Nimo's Daily Creation" for today
+- Click "Queue for Plotting" to create a job on the backend
+- Recent jobs appear under "Recent Jobs" with status badges
+
 ## Tech Stack
 
 - **Svelte** - Reactive UI framework
