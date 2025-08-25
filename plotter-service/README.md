@@ -66,7 +66,12 @@ The service will be available at `http://localhost:8000`
 - `GET /` - Root endpoint with service status
 - `GET /health` - Health check endpoint
 - `POST /generate-svg` - Convert raster images to optimized SVG for plotting
-- `GET /daily-art` - Get a unique procedural SVG for the current day
+- `GET /daily-art` - Get a unique spirograph SVG for the current day
+- `GET /spirographs` - Generate packs of spirograph patterns
+- `POST /jobs` - Create a new job from today's art or provided SVG
+- `GET /jobs` - List recent jobs
+- `GET /jobs/next?plotter_id=NIMO-01` - Atomically reserve the next job for a plotter
+- `POST /jobs/{id}/status` - Update job status and optional notes
 - `GET /docs` - Interactive API documentation (Swagger UI)
 
 ### Using the Pipeline
@@ -134,9 +139,59 @@ curl "https://your-service.com/daily-art"
 
 **Features:**
 - **Date-seeded randomness**: Same output all day, new one each day
-- **Procedural generation**: Uses mathematical algorithms (spirals, noise, etc.)
+- **Spirograph patterns**: Uses hypotrochoid and epitrochoid mathematical curves
 - **Plotter-ready**: Optimized SVG output suitable for plotting
 - **Consistent dimensions**: 160x160mm output with proper viewBox
+
+### Spirograph Generation
+
+Generate packs of spirograph patterns:
+
+```bash
+# Get 8 spirographs (80x80mm)
+curl "https://your-service.com/spirographs?count=8&width_mm=80&height_mm=80"
+
+# Get 12 spirographs with custom dimensions
+curl "https://your-service.com/spirographs?count=12&width_mm=100&height_mm=60&margin_mm=10"
+
+# Use specific seed for reproducible results
+curl "https://your-service.com/spirographs?seed=12345"
+```
+
+**Pattern Types:**
+- **Hypotrochoids**: Rolling circle inside fixed circle
+- **Epitrochoids**: Rolling circle outside fixed circle
+- **Mathematical precision**: Uses LCM calculations for closed curves
+- **Optimized sampling**: 4000+ points for smooth lines
+
+## Jobs API
+
+SQLite-backed minimal queue for plotter jobs.
+
+Schema: `id, svg_text, status(queued|reserved|started|completed|failed), plotter_id, created_at, updated_at`.
+
+Examples:
+
+```bash
+# Create today's job (uses /daily-art under the hood)
+curl -X POST "https://your-service.com/jobs" -H "Content-Type: application/json"
+
+# Create a job from your own SVG
+curl -X POST "https://your-service.com/jobs" \
+  -H "Content-Type: application/json" \
+  -d '{"svg_text": "<svg>...</svg>"}'
+
+# List jobs
+curl "https://your-service.com/jobs?limit=10"
+
+# Reserve next job for plotter NIMO-01 (204 if none available)
+curl "https://your-service.com/jobs/next?plotter_id=NIMO-01"
+
+# Update job status
+curl -X POST "https://your-service.com/jobs/123/status" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "started", "notes": "sent to GRBL"}'
+```
 
 ## Project Structure
 

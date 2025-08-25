@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 from .pipeline import raster_to_svg
+from .spirographs import get_daily_spirograph
 from datetime import date
 import random
 from typing import Optional, List
@@ -28,6 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 @app.on_event("startup")
 def _startup() -> None:
@@ -82,30 +84,49 @@ def generate_daily_svg():
     """Generate a unique SVG for the current day using procedural generation"""
     # Seed randomness by date so it's stable
     today = date.today().isoformat()
-    random.seed(today)
-
-    # Example: generate a spiral path
-    w, h = 160, 160
-    svg = f'<svg viewBox="0 0 {w} {h}" xmlns="http://www.w3.org/2000/svg">'
-    x, y = w/2, h/2
-    path = f'<path d="M{x},{y} '
-    for i in range(200):
-        angle = i * 0.2
-        r = 2 + i * 0.3
-        px = x + r * random.uniform(0.9, 1.1) * \
-            (1.2 * random.choice([1, -1])) * (i % 2)
-        py = y + r * random.uniform(0.9, 1.1) * \
-            (1.2 * random.choice([1, -1])) * (i % 2)
-        path += f'L{px},{py} '
-    path += '" stroke="black" fill="none"/>'
-    svg += path + "</svg>"
-    return svg
+    # Convert date string to integer seed for reproducible results
+    seed = hash(today) % (2**32)  # Ensure positive 32-bit integer
+    
+    # Use spirograph generation for more interesting daily art
+    return get_daily_spirograph(seed=seed)
 
 
 @app.get("/daily-art")
 def daily_art():
     """Return a unique SVG for the current day"""
     return {"date": date.today().isoformat(), "svg": generate_daily_svg()}
+
+
+@app.get("/spirographs")
+def generate_spirographs(
+    count: int = 8,
+    width_mm: float = 80.0,
+    height_mm: float = 80.0,
+    margin_mm: float = 5.0,
+    seed: Optional[int] = None
+):
+    """Generate a pack of spirograph SVGs"""
+    from .spirographs import generate_spirograph_pack
+    
+    if seed is None:
+        # Use today's date as seed if none provided
+        today = date.today().isoformat()
+        seed = hash(today) % (2**32)
+    
+    svgs = generate_spirograph_pack(
+        count=min(count, 20),  # Limit to 20 max
+        width_mm=width_mm,
+        height_mm=height_mm,
+        margin_mm=margin_mm,
+        seed=seed
+    )
+    
+    return {
+        "count": len(svgs),
+        "seed": seed,
+        "dimensions": {"width_mm": width_mm, "height_mm": height_mm, "margin_mm": margin_mm},
+        "svgs": svgs
+    }
 
 
 # Jobs API
