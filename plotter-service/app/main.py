@@ -86,7 +86,7 @@ def generate_daily_svg():
     today = date.today().isoformat()
     # Convert date string to integer seed for reproducible results
     seed = hash(today) % (2**32)  # Ensure positive 32-bit integer
-    
+
     # Use spirograph generation for more interesting daily art
     return get_daily_spirograph(seed=seed)
 
@@ -107,12 +107,12 @@ def generate_spirographs(
 ):
     """Generate a pack of spirograph SVGs"""
     from .spirographs import generate_spirograph_pack
-    
+
     if seed is None:
         # Use today's date as seed if none provided
         today = date.today().isoformat()
         seed = hash(today) % (2**32)
-    
+
     svgs = generate_spirograph_pack(
         count=min(count, 20),  # Limit to 20 max
         width_mm=width_mm,
@@ -120,7 +120,7 @@ def generate_spirographs(
         margin_mm=margin_mm,
         seed=seed
     )
-    
+
     return {
         "count": len(svgs),
         "seed": seed,

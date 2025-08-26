@@ -5,7 +5,8 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
-DB_PATH = os.environ.get("JOBS_DB_PATH", os.path.join(os.path.dirname(__file__), "jobs.db"))
+DB_PATH = os.environ.get("JOBS_DB_PATH", os.path.join(
+    os.path.dirname(__file__), "jobs.db"))
 
 
 def _ensure_dirs_exist(path: str) -> None:
@@ -97,7 +98,8 @@ def reserve_next_job(plotter_id: str) -> Optional[Dict[str, Any]]:
         if updated.rowcount == 0:
             conn.execute("ROLLBACK")
             return None
-        reserved = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        reserved = conn.execute(
+            "SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
         conn.execute("COMMIT")
         return job_row_to_dict(reserved)
 
@@ -114,7 +116,6 @@ def update_job_status(job_id: int, status: str, notes: Optional[str] = None) -> 
             "UPDATE jobs SET status = ?, notes = COALESCE(?, notes), updated_at = ? WHERE id = ?",
             (status, notes, now, job_id),
         )
-        row = conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
+        row = conn.execute("SELECT * FROM jobs WHERE id = ?",
+                           (job_id,)).fetchone()
         return job_row_to_dict(row) if row else None
-
-

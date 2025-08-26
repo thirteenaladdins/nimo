@@ -14,13 +14,13 @@ import numpy as np
 def hypotrochoid(R: float, r: float, d: float, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate hypotrochoid coordinates.
-    
+
     Args:
         R: Fixed circle radius
         r: Rolling circle radius (inside)
         d: Pen offset distance
         t: Angle array in radians
-    
+
     Returns:
         Tuple of (x, y) coordinate arrays
     """
@@ -32,13 +32,13 @@ def hypotrochoid(R: float, r: float, d: float, t: np.ndarray) -> Tuple[np.ndarra
 def epitrochoid(R: float, r: float, d: float, t: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate epitrochoid coordinates.
-    
+
     Args:
         R: Fixed circle radius
         r: Rolling circle radius (outside)
         d: Pen offset distance
         t: Angle array in radians
-    
+
     Returns:
         Tuple of (x, y) coordinate arrays
     """
@@ -56,12 +56,12 @@ def lcm(a: int, b: int) -> int:
 def closed_theta(R: float, r: float, epi: bool = False) -> float:
     """
     Calculate the angle needed for a closed curve.
-    
+
     Args:
         R: Fixed circle radius
         r: Rolling circle radius
         epi: True for epitrochoid, False for hypotrochoid
-    
+
     Returns:
         Angle in radians for complete curve
     """
@@ -76,17 +76,17 @@ def closed_theta(R: float, r: float, epi: bool = False) -> float:
 def coordinates_to_svg_path(xs: np.ndarray, ys: np.ndarray) -> str:
     """
     Convert coordinate arrays to SVG path string.
-    
+
     Args:
         xs: X coordinates array
         ys: Y coordinates array
-    
+
     Returns:
         SVG path string
     """
     if len(xs) == 0:
         return ""
-    
+
     path_cmds = [f"M {xs[0]:.3f} {ys[0]:.3f}"]
     for x, y in zip(xs[1:], ys[1:]):
         path_cmds.append(f"L {x:.3f} {y:.3f}")
@@ -102,25 +102,25 @@ def generate_spirograph_svg(
 ) -> str:
     """
     Generate a random spirograph SVG.
-    
+
     Args:
         width_mm: SVG width in mm
         height_mm: SVG height in mm
         margin_mm: Margin around drawing area
         stroke_width: Stroke width in mm
         seed: Random seed for reproducible results
-    
+
     Returns:
         SVG string
     """
     if seed is not None:
         random.seed(seed)
-    
+
     # Drawing area
     draw_w = width_mm - 2 * margin_mm
     draw_h = height_mm - 2 * margin_mm
     scale = min(draw_w, draw_h) / 2.0
-    
+
     # Predefined parameter sets for good-looking patterns
     param_sets = [
         (60, 13, 18, "hypo"),
@@ -136,27 +136,27 @@ def generate_spirograph_svg(
         (42, 11, 35, "hypo"),
         (68, 33, 14, "epi"),
     ]
-    
+
     # Pick a random parameter set
     R, r, d, kind = random.choice(param_sets)
-    
+
     # Calculate closed curve parameters
     T = closed_theta(R, r, epi=(kind == "epi"))
     samples = 4000  # Dense enough for smooth lines
     t = np.linspace(0, T, samples, endpoint=True)
-    
+
     # Generate coordinates
     if kind == "hypo":
         x, y = hypotrochoid(R, r, d, t)
     else:
         x, y = epitrochoid(R, r, d, t)
-    
+
     # Normalize to fit drawing area
     max_extent = max(np.max(np.abs(x)), np.max(np.abs(y)))
     s = scale / max_extent
     xs = x * s
     ys = y * s
-    
+
     # Create SVG
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" 
     width="{width_mm}mm" height="{height_mm}mm" 
@@ -167,7 +167,7 @@ def generate_spirograph_svg(
               stroke-width="{stroke_width}"/>
     </g>
 </svg>'''
-    
+
     return svg
 
 
@@ -181,7 +181,7 @@ def generate_spirograph_pack(
 ) -> List[str]:
     """
     Generate multiple spirograph SVGs.
-    
+
     Args:
         count: Number of SVGs to generate
         width_mm: SVG width in mm
@@ -189,13 +189,13 @@ def generate_spirograph_pack(
         margin_mm: Margin around drawing area
         stroke_width: Stroke width in mm
         seed: Random seed for reproducible results
-    
+
     Returns:
         List of SVG strings
     """
     if seed is not None:
         random.seed(seed)
-    
+
     svgs = []
     for i in range(count):
         svg = generate_spirograph_svg(
@@ -206,7 +206,7 @@ def generate_spirograph_pack(
             seed=seed + i if seed is not None else None
         )
         svgs.append(svg)
-    
+
     return svgs
 
 
@@ -214,10 +214,10 @@ def generate_spirograph_pack(
 def get_daily_spirograph(seed: Optional[int] = None) -> str:
     """
     Get a spirograph for daily art (160x160mm).
-    
+
     Args:
         seed: Random seed (typically date-based)
-    
+
     Returns:
         SVG string for daily art
     """
