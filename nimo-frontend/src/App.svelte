@@ -8,6 +8,39 @@
   let jobs = [];
   let jobsLoading = false;
 
+  // Format date for display
+  function formatDate(dateString) {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-GB', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (e) {
+      // Fallback to original string if parsing fails
+      return dateString;
+    }
+  }
+
+  // Format job timestamp
+  function formatJobTime(timestamp) {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      }) + ' ' + date.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (e) {
+      return timestamp;
+    }
+  }
+
   async function queueDaily() {
     try {
       const res = await fetch(`${api}/jobs`, { method: "POST" });
@@ -82,13 +115,18 @@
     {#if dailyLoading}
       <p class="text-gray-600">Loading today's creation...</p>
     {:else if dailyArt}
-      <p class="text-sm text-gray-500 mb-3">{dailyArt.date}</p>
+      <p class="text-sm text-gray-500 mb-3">
+        {formatDate(dailyArt.date)}
+      </p>
       <div class="border-2 border-gray-300 rounded-lg p-4 bg-white">
         <div class="flex justify-center">
           {@html dailyArt.svg}
         </div>
       </div>
-      <button class="mt-3 bg-blue-600 text-white px-4 py-2 rounded" on:click={queueDaily}>
+      <button
+        class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        on:click={queueDaily}
+      >
         Queue for Plotting
       </button>
     {:else}
@@ -136,11 +174,18 @@
           <li class="border rounded p-3 bg-white">
             <div class="flex items-center justify-between">
               <div>
-                <div class="text-sm text-gray-500">#{job.id} — {job.created_at}</div>
+                <div class="text-sm text-gray-500">
+                  #{job.id} — {formatJobTime(job.created_at)}
+                </div>
                 <div class="mt-1">
-                  <span class="inline-block text-xs px-2 py-1 rounded-full {job.status}">{job.status}</span>
+                  <span
+                    class="inline-block text-xs px-2 py-1 rounded-full {job.status}"
+                    >{job.status}</span
+                  >
                   {#if job.plotter_id}
-                    <span class="ml-2 text-xs text-gray-500">{job.plotter_id}</span>
+                    <span class="ml-2 text-xs text-gray-500"
+                      >{job.plotter_id}</span
+                    >
                   {/if}
                 </div>
               </div>
@@ -188,10 +233,25 @@
   button:hover {
     transition: background-color 0.2s;
   }
-  
-  .queued { background: #eef2ff; color: #3730a3; }
-  .reserved { background: #fffbeb; color: #92400e; }
-  .started { background: #e0f2fe; color: #075985; }
-  .completed { background: #dcfce7; color: #166534; }
-  .failed { background: #fee2e2; color: #991b1b; }
+
+  .queued {
+    background: #eef2ff;
+    color: #3730a3;
+  }
+  .reserved {
+    background: #fffbeb;
+    color: #92400e;
+  }
+  .started {
+    background: #e0f2fe;
+    color: #075985;
+  }
+  .completed {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .failed {
+    background: #fee2e2;
+    color: #991b1b;
+  }
 </style>
