@@ -15,6 +15,11 @@ from .db import (
     update_job_status,
 )
 
+from .gcode_generator import svg_to_gcode, GCodeSettings
+from fastapi.responses import FileResponse
+import tempfile
+import os
+
 app = FastAPI(
     title="Plotter Service",
     description="A service for handling plotter operations",
@@ -94,7 +99,76 @@ def generate_daily_svg():
 @app.get("/daily-art")
 def daily_art():
     """Return a unique SVG for the current day"""
-    return {"date": date.today().isoformat(), "svg": generate_daily_svg()}
+    svg_content = generate_daily_svg()
+    return {"date": date.today().isoformat(), "svg": svg_content}
+
+
+@app.get("/daily-art/gcode")
+def daily_art_gcode():
+    """Return G-code for today's daily art"""
+    svg_content = generate_daily_svg()
+    gcode_content = svg_to_gcode(svg_content)
+    return {"date": date.today().isoformat(), "gcode": gcode_content}
+
+
+@app.get("/daily-art/download/svg")
+def download_daily_svg():
+    """Download today's daily art as SVG file"""
+    svg_content = generate_daily_svg()
+
+    # Create temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.svg', delete=False) as f:
+        f.write(svg_content)
+        temp_path = f.name
+
+    # Return file for download
+    return FileResponse(
+        temp_path,
+        media_type='image/svg+xml',
+        filename=f"nimo-daily-{date.today().isoformat()}.svg"
+    )
+
+
+@app.get("/daily-art/download/gcode")
+def download_daily_gcode():
+    """Download today's daily art as G-code file"""
+    svg_content = generate_daily_svg()
+    gcode_content = svg_to_gcode(svg_content)
+
+    # Create temporary file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.gcode', delete=False) as f:
+        f.write(gcode_content)
+        temp_path = f.name
+
+    # Return file for download
+    return FileResponse(
+        temp_path,
+        media_type='text/plain',
+        filename=f"nimo-daily-{date.today().isoformat()}.gcode"
+    )
+
+
+@app.post("/svg-to-gcode")
+def convert_svg_to_gcode(svg_request: dict):
+    """Convert custom SVG to G-code"""
+    try:
+        svg_content = svg_request.get("svg")
+        if not svg_content:
+            raise HTTPException(status_code=400, detail="SVG content required")
+
+        # Optional settings
+        settings = GCodeSettings()
+        if "feed_rate" in svg_request:
+            settings.feed_rate = float(svg_request["feed_rate"])
+        if "pen_up_height" in svg_request:
+            settings.pen_up_height = float(svg_request["pen_up_height"])
+        if "pen_down_height" in svg_request:
+            settings.pen_down_height = float(svg_request["pen_down_height"])
+
+        gcode_content = svg_to_gcode(svg_content, settings)
+        return {"gcode": gcode_content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/spirographs")

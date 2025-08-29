@@ -122,6 +122,46 @@
   // Fetch daily art when component mounts
   fetchDailyArt();
   fetchJobs();
+
+  // Download functions
+  async function downloadFile(fileType) {
+    try {
+      const endpoint =
+        fileType === "svg"
+          ? "/daily-art/download/svg"
+          : "/daily-art/download/gcode";
+      const response = await fetch(`${api}${endpoint}`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get filename from response headers
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = `nimo-daily-${new Date().toISOString().split("T")[0]}.${fileType === "svg" ? "svg" : "gcode"}`;
+
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert(`Failed to download ${fileType.toUpperCase()} file`);
+    }
+  }
 </script>
 
 <main class="p-4">
@@ -141,6 +181,23 @@
           {@html dailyArt.svg}
         </div>
       </div>
+
+      <!-- Download Buttons -->
+      <div class="mt-4 flex gap-3 justify-center">
+        <button
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+          on:click={() => downloadFile("svg")}
+        >
+          📥 Download SVG
+        </button>
+        <button
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+          on:click={() => downloadFile("gcode")}
+        >
+          📥 Download G-Code
+        </button>
+      </div>
+
       <!-- <button
         class="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         on:click={queueDaily}
